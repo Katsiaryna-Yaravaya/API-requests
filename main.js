@@ -1,55 +1,56 @@
-// const response = fetch('http://api.citybik.es/v2/networks')
-//     .then(response => response.json())
-//     .then(data => renderTable(data));
-//
-// function renderTable() {
-//
-// }
-
 fetch('http://api.citybik.es/v2/networks').then(res => {
     res.json().then(data => {
-        console.log(data);
+        const renderArr = data.networks.map((item) => {
+            return {
+                id: item.id,
+                name: item.company,
+                location: item.location.city
+            }
+        })
+        renderTable(renderArr)
+    })
+});
 
-        if (data.networks.length > 0) {
-            let temp = "";
-            data.networks.forEach((item, index) => {
-                if (index > 19) {
-                    return
+const onRowClick = (id) => {
+    fetch(`http://api.citybik.es/v2/networks/${id}`).then(res => {
+        res.json().then(data => {
+            const renderClickArr = data.network.stations.map((item) => {
+                console.log(item)
+                return {
+                    networkName: data.network.name,
+                    stationName: item.name || 'default text',
+                    amountFreeBikes: item.free_bikes || 'default text',
+                    amountSlots: item.extra?.slots || 'default text'
                 }
-                temp += '<tr>';
-                temp += '<td>' + item.company + '</td>';
-                temp += '<td>' + item.location.city + '</td></tr>';
-
-             /*   //дожидаемся полной загрузки страницы
-                window.onload = function () {
-
-                    //получаем идентификатор элемента
-                    var a = document.getElementById('switch');
-
-                    //вешаем на него событие
-                    a.onclick = function () {
-                        //производим какие-то действия
-                        if (this.innerHTML === 'On') this.innerHTML = 'Off';
-                        else this.innerHTML = 'On';
-                        //предотвращаем переход по ссылке href
-                        return false;
-                    }
-                }*/
-
-               /* item.company.onclick = function () {
-                    temp += '<tr>';
-                    if (temp += '<td>' + item.company + '</td>') {
-                    temp += '<td>' + item.name + '</td>';
-                    }else if (temp += '<td>' + item.location.city + '</td>') {
-                        temp += '<td>' + item.extra.free-bikes + '</td>';
-                        temp += '<td>' + item.extra.slots + '</td></tr>';
-                    } else {
-                        temp += '<td>' + item.company + '</td>';
-                        temp += '<td>' + item.location.city + '</td></tr>';
-                    }
-                }*/
             })
-            document.getElementById('data').innerHTML = temp;
+            console.log(renderClickArr)
+            renderTable(renderClickArr)
+        })
+    })
+};
+
+const renderTable = (items) => {
+    console.log(items)
+    const table = document.querySelector('.table')
+    const oldTableBody = document.getElementById('data')
+    oldTableBody?.remove();
+    const newTableBody = document.createElement('tbody')
+    table.appendChild(newTableBody)
+    newTableBody.id = 'data'
+
+    items.forEach((network, index) => {
+        if (index > 19) return
+        const row = document.createElement('tr');
+        row.onclick = network.id?() => onRowClick(network.id) : null
+
+        for (let key in network) {
+            if (key !== 'id') {
+                const cell = document.createElement('td');
+                cell.innerText = network[key]
+                row.appendChild(cell)
+            }
         }
-    });
-})
+
+        newTableBody.appendChild(row);
+    })
+}
